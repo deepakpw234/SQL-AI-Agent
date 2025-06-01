@@ -13,13 +13,13 @@ load_dotenv()
 from dataclasses import dataclass
 
 @dataclass
-class SQLAgentConfig:
+class SQLAgentWithSQLDataConfig:
     sql_db_path = os.path.join(os.getcwd(),"artifacts","db","sqldb.db")
 
 
-class SQLAgent:
+class SQLAgentWithSQLData:
     def __init__(self):
-        self.sql_agent_config = SQLAgentConfig()
+        self.sql_agent_config = SQLAgentWithSQLDataConfig()
 
     def create_sql_agent_from_sql_data(self):
         try:
@@ -27,11 +27,11 @@ class SQLAgent:
 
             db = SQLDatabase.from_uri(f"sqlite:///{self.sql_agent_config.sql_db_path}")
 
-            agent_executor = create_sql_agent(llm=llm,db=db,agent_type='openai-tools')
+            sql_agent_executor = create_sql_agent(llm=llm,db=db,agent_type='openai-tools')
 
             question = 'how many albums are there?'
-            
-            query_result = agent_executor.invoke({'input':question})
+
+            query_result = sql_agent_executor.invoke({'input':question})
 
             print(query_result['output'])
 
@@ -40,6 +40,6 @@ class SQLAgent:
             raise CustomException(e,sys)
         
 if __name__=="__main__":
-    sql_agent_from_sql_data = SQLAgent()
+    sql_agent_from_sql_data = SQLAgentWithSQLData()
     sql_agent_from_sql_data.create_sql_agent_from_sql_data()
     
