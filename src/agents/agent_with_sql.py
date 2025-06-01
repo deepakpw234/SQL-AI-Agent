@@ -21,7 +21,7 @@ class SQLAgentWithSQLData:
     def __init__(self):
         self.sql_agent_config = SQLAgentWithSQLDataConfig()
 
-    def create_sql_agent_from_sql_data(self):
+    def create_sql_agent_from_sql_data(self,question):
         try:
             llm = ChatOpenAI()
 
@@ -29,17 +29,13 @@ class SQLAgentWithSQLData:
 
             sql_agent_executor = create_sql_agent(llm=llm,db=db,agent_type='openai-tools')
 
-            question = 'how many albums are there?'
-
             query_result = sql_agent_executor.invoke({'input':question})
 
-            print(query_result['output'])
+            result = query_result['output']
 
 
         except Exception as e:
             raise CustomException(e,sys)
         
-if __name__=="__main__":
-    sql_agent_from_sql_data = SQLAgentWithSQLData()
-    sql_agent_from_sql_data.create_sql_agent_from_sql_data()
+        return result
     

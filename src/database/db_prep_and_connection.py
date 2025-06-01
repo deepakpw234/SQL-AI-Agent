@@ -55,9 +55,9 @@ class DatabasePreparationAndConnection:
         try:
             db = SQLDatabase.from_uri(f"sqlite:///{self.db_prep_and_connection_config.sql_db_path}")
 
-            print(db.dialect)
-            print(db.get_usable_table_names())
-            print(db.run("select count(*) from employee"))
+            # print(db.dialect)
+            # print(db.get_usable_table_names())
+            # print(db.run("select count(*) from employee"))
 
 
         except Exception as e:
@@ -67,17 +67,11 @@ class DatabasePreparationAndConnection:
         try:
 
             db = SQLDatabase(engine=engine)
-            print(db.dialect)
-            print(db.get_usable_table_names())
-            print(db.run("select count(*) from cancer"))
+            # print(db.dialect)
+            # print(db.get_usable_table_names())
+            # print(db.run("select count(*) from cancer"))
 
 
         except Exception as e:
             raise CustomException(e,sys)
         
-
-if __name__=="__main__":
-    data_prep_conntection = DatabasePreparationAndConnection()
-    engine = data_prep_conntection.create_sqldb_from_csv()
-    data_prep_conntection.sql_connection_check()
-    data_prep_conntection.csv_connection_check(engine=engine)
