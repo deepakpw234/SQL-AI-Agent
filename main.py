@@ -17,7 +17,7 @@ if __name__=="__main__":
         # question = 'how many albums are there?'
         # database = "sql"
 
-        question = 'how many patients are there in the cancer table'
+        question = ' how many candidates have been contest the election from Lucknow PC. and what are the names od them'
         database = "csv"
 
         if database=="sql":

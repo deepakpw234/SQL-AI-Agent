@@ -69,9 +69,15 @@ class DatabasePreparationAndConnection:
             db = SQLDatabase(engine=engine)
             # print(db.dialect)
             # print(db.get_usable_table_names())
-            # print(db.run("select count(*) from cancer"))
+            # print(db.run('select * from vidhan WHERE "PC NAME"="Aruku"; '))
+            # print(db.run('PRAGMA table_info(vidhan);'))
+            # # print(db.run('PRAGMA table_info(cancer);'))
 
 
         except Exception as e:
             raise CustomException(e,sys)
         
+if __name__=="__main__":
+    a = DatabasePreparationAndConnection()
+    engine = a.create_sqldb_from_csv()
+    a.csv_connection_check(engine=engine)
