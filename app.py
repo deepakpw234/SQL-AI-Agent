@@ -5,8 +5,10 @@ import os
 import sys
 import pandas as pd
 from src.database.db_prep_and_connection import DatabasePreparationAndConnection
+from src.database.upload_file_db_preparation import UploadedFileDatabasePreparation
 from src.agents.agent_with_sql import SQLAgentWithSQLData
 from src.agents.agent_with_csv import SQLAgentWithCSVData
+from src.agents.agent_with_upload_csv import SQLAgentWithUploadCSVData
 
 st.set_page_config(page_title="SQL AI Chatbot", layout="wide")
 
@@ -24,14 +26,23 @@ st.title("SQL AI Agent")
 uploaded_files = st.sidebar.file_uploader(
     "📁 Upload CSV or XLSX files",
     type=["csv", "xlsx"],
-    accept_multiple_files=True,
     help="Upload one or more CSV/XLSX files for processing"
 )
 
 
-# Dropdowns for functionality
+uploaded_engine = None
+if uploaded_files:
+    uploaded_file_dir = os.path.join(os.getcwd(),'artifacts','upload_data')
+    os.makedirs(uploaded_file_dir,exist_ok=True)
+    uploaded_file_path = os.path.join(uploaded_file_dir,uploaded_files.name)
+    with open(uploaded_file_path, "wb") as f:
+        f.write(uploaded_files.getbuffer())
 
-app_functionality = st.sidebar.selectbox("App Functionality", ["Chat", "Process files"])
+    upload_file_db_prep = UploadedFileDatabasePreparation()
+    uploaded_engine = upload_file_db_prep.create_sqldb_from_csv()
+    upload_file_db_prep.csv_connection_check(engine=uploaded_engine)
+    
+
 
 chat_type = st.sidebar.selectbox(
     "Chat Type",
@@ -42,13 +53,13 @@ chat_type = st.sidebar.selectbox(
     ]
 )
 
-# if st.sidebar.button("🧹 Clear Chat"):
-#     st.session_state.messages = st.session_state.get("messages", [])[:0]
-#     st.experimental_rerun()
-
-
-# Text input
-
+if st.sidebar.button("Clear Uploaded DB"):
+    uploaded_db_path = r"artifacts\db\uploadcsv.db"
+    if os.path.exists(uploaded_db_path):
+        os.remove(uploaded_db_path)
+        st.sidebar.success("Uploaded DB cleared.")
+    else:
+        st.sidebar.warning("No uploaded DB found")
 
 
 
@@ -56,86 +67,56 @@ chat_type = st.sidebar.selectbox(
 user_input = st.text_area(
     "💬 Enter your question here:",
     height=70,
-    placeholder="Type your question...",
+    placeholder="E.g. How many records are there in the table?",
     key="chat_input_box"
 )
 
 submit_btn = st.button("🚀 Submit")
 
 data_prep_conntection = DatabasePreparationAndConnection()
-engine = data_prep_conntection.create_sqldb_from_csv()
+stored_engine = data_prep_conntection.create_sqldb_from_csv()
 data_prep_conntection.sql_connection_check()
-data_prep_conntection.csv_connection_check(engine=engine)
-
-# question = 'how many albums are there?'
-# database = "sql"
-
-# question = ' how many candidates have been contest the election from Lucknow PC. and what are the names od them'
-question = user_input
-database = "csv"
-
-if submit_btn:
-
-    if database=="sql":
-
-        sql_agent_from_sql_data = SQLAgentWithSQLData()
-        output = sql_agent_from_sql_data.create_sql_agent_from_sql_data(question=question)
-        print(output)
-
-    elif database=="csv":
-
-        sql_agent_with_csv_data = SQLAgentWithCSVData()
-        output = sql_agent_with_csv_data.create_sql_agent_from_csv_data(engine=engine,question=question)
-        print(output)
-
-    user_output = output
-
-    st.text_area(
-        "🤖 Agent Response",
-        value=user_output,
-        height=320,
-        key="assistant_output_box",
-        disabled=True  # Makes it read-only
-    )
+data_prep_conntection.csv_connection_check(engine=stored_engine)
 
 
-# File handling
-# if uploaded_files:
-    # response_msg = UploadFile.run_pipeline(uploaded_files, st.session_state.messages, app_functionality)
-    # if response_msg:
-    #     st.session_state.messages.append({"role": "assistant", "content": response_msg, "avatar": "images/openai.png"})
-    # pass
-# Text submit handling
-# if user_input:
-#     st.session_state.messages.append({"role": "user", "content": user_input, "avatar": "images/AI_RT.png"})
-    # response = ChatBot.respond(
-    #     st.session_state.messages,
-    #     user_input,
-    #     chat_type,
-    #     app_functionality
-    # )
-    # st.session_state.messages.append({"role": "assistant", "content": response, "avatar": "images/openai.png"})
+if submit_btn and user_input.strip():
+    try:
+        if chat_type == "Chat with stored SQL-DB":
+            sql_agent_from_sql_data = SQLAgentWithSQLData()
+            output = sql_agent_from_sql_data.create_sql_agent_from_sql_data(question=user_input)
+            print(output)
 
-# if submit_btn and user_input.strip():
-#     st.session_state.messages.append({
-#         "role": "user",
-#         "content": user_input,
-#         "avatar": "images/AI_RT.png"
-#     })
+        elif chat_type == "Chat with stored CSV-DB":
+            sql_agent_with_csv_data = SQLAgentWithCSVData()
+            output = sql_agent_with_csv_data.create_sql_agent_from_csv_data(engine=stored_engine,question=user_input)
+            print(output)
 
-    # response = ChatBot.respond(
-    #     st.session_state.messages,
-    #     user_input,
-    #     chat_type,
-    #     app_functionality
-    # )
+        elif chat_type == "Chat with Uploaded CSV-DB":
+            if uploaded_engine is None:
+                uploaded_db_path = os.path.join(os.getcwd(),"artifacts","db","uploadcsv.db")
+                if os.path.exists(uploaded_db_path):
+                    os.remove(uploaded_db_path)
+                st.error("Please upload a CSV/XLSX file first")
+                output = ''
+            else:
+                sql_agent_with_upload_csv_data = SQLAgentWithUploadCSVData()
+                output = sql_agent_with_upload_csv_data.create_sql_agent_from_upload_csv_data(engine=uploaded_engine,question=user_input)
+                print(output)
 
-    # st.session_state.messages.append({
-    #     "role": "assistant",
-    #     # "content": response,
-    #     "avatar": "images/openai.png"
-    # })
+        if output:
+            st.text_area(
+                "🤖 Agent Response",
+                value=output,
+                height=320,
+                key="assistant_output_box",
+                disabled=True  # Makes it read-only
+            )
+        else:
+            st.warning("No response generated")
 
-    # # Optionally clear input after sending
-    # st.session_state.chat_input_box = ""
+    except Exception as e:
+        raise CustomException(e,sys)
+
+
+
 
