@@ -4,5 +4,8 @@ langchain-openai
 pandas
 streamlit
 pyprojroot
+openai-whisper
 
--e .
+streamlit_webrtc
+soundfile
+# -e .
