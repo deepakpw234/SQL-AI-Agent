@@ -41,7 +41,7 @@ class AudioQuery:
 
             chain = template | llm
 
-            final_transcript = chain.invoke(actual_transcript)
+            final_transcript = chain.invoke({'transcript':actual_transcript})
 
         except Exception as e:
             raise CustomException(e,sys)
@@ -49,13 +49,13 @@ class AudioQuery:
         return final_transcript.content
     
 
-if __name__=="__main__":
-    file_path = r"C:\Users\deepa\Panda 2024\GenAI\SQL Agent\artifacts\audio_data\recorded_query.wav"
-    a = AudioQuery()
-    b = a.transcribe_audio(file_path)
-    c = a.get_llm_filteration(b)
-    print("b : ",b)
-    print("c : ",c)
+# if __name__=="__main__":
+#     file_path = r"C:\Users\deepa\Panda 2024\GenAI\SQL Agent\artifacts\audio_data\recorded_query.wav"
+#     a = AudioQuery()
+#     b = a.transcribe_audio(file_path)
+#     c = a.get_llm_filteration(b)
+#     print("b : ",b)
+#     print("c : ",c)
 
 
 

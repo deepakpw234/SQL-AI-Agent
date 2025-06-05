@@ -9,6 +9,7 @@ from src.database.upload_file_db_preparation import UploadedFileDatabasePreparat
 from src.agents.agent_with_sql import SQLAgentWithSQLData
 from src.agents.agent_with_csv import SQLAgentWithCSVData
 from src.agents.agent_with_upload_csv import SQLAgentWithUploadCSVData
+from src.pipeline.audio_query import AudioQuery
 
 st.set_page_config(page_title="SQL AI Chatbot", layout="wide")
 
@@ -53,10 +54,8 @@ chat_type = st.sidebar.selectbox(
     ]
 )
 
-query_option = st.sidebar.radio(label='How do you want to give query',options=['text','audio'])
+query_option = st.sidebar.radio(label='Query Format',options=['Text','Audio'])
 
-if query_option=="audio":
-    
 
 if st.sidebar.button("Clear Uploaded DB"):
     uploaded_db_path = r"artifacts\db\uploadcsv.db"
@@ -68,59 +67,120 @@ if st.sidebar.button("Clear Uploaded DB"):
 
 
 
-
-user_input = st.text_area(
-    "💬 Enter your question here:",
-    height=70,
-    placeholder="E.g. How many records are there in the table?",
-    key="chat_input_box"
-)
-
-submit_btn = st.button("🚀 Submit")
-
 data_prep_conntection = DatabasePreparationAndConnection()
 stored_engine = data_prep_conntection.create_sqldb_from_csv()
 data_prep_conntection.sql_connection_check()
 data_prep_conntection.csv_connection_check(engine=stored_engine)
 
+if query_option=="Audio":
+    audio_file = st.audio_input("Record your query")
 
-if submit_btn and user_input.strip():
-    try:
-        if chat_type == "Chat with stored SQL-DB":
-            sql_agent_from_sql_data = SQLAgentWithSQLData()
-            output = sql_agent_from_sql_data.create_sql_agent_from_sql_data(question=user_input)
-            print(output)
+    if audio_file is not None:
+        # Define the save path for the recorded audio
+        audio_save_path = os.path.join(os.getcwd(),'artifacts','audio_data', "recorded_query.wav")
 
-        elif chat_type == "Chat with stored CSV-DB":
-            sql_agent_with_csv_data = SQLAgentWithCSVData()
-            output = sql_agent_with_csv_data.create_sql_agent_from_csv_data(engine=stored_engine,question=user_input)
-            print(output)
+        # Save the recorded audio file locally
+        with open(audio_save_path, "wb") as f:
+            f.write(audio_file.getbuffer())  # Writes the audio file buffer to the specified path
 
-        elif chat_type == "Chat with Uploaded CSV-DB":
-            if uploaded_engine is None:
-                uploaded_db_path = os.path.join(os.getcwd(),"artifacts","db","uploadcsv.db")
-                if os.path.exists(uploaded_db_path):
-                    os.remove(uploaded_db_path)
-                st.error("Please upload a CSV/XLSX file first")
-                output = ''
-            else:
-                sql_agent_with_upload_csv_data = SQLAgentWithUploadCSVData()
-                output = sql_agent_with_upload_csv_data.create_sql_agent_from_upload_csv_data(engine=uploaded_engine,question=user_input)
+
+        audio_query = AudioQuery()
+        model_transcript = audio_query.transcribe_audio(audio_path=audio_save_path)
+        final_transcript = audio_query.get_llm_filteration(actual_transcript=model_transcript)
+
+        # st.write("Model Transcript: ",model_transcript)
+        st.write("Query: ",final_transcript)
+
+        user_input = final_transcript
+
+        try:
+            if chat_type == "Chat with stored SQL-DB":
+                sql_agent_from_sql_data = SQLAgentWithSQLData()
+                output = sql_agent_from_sql_data.create_sql_agent_from_sql_data(question=user_input)
                 print(output)
 
-        if output:
-            st.text_area(
-                "🤖 Agent Response",
-                value=output,
-                height=320,
-                key="assistant_output_box",
-                disabled=True  # Makes it read-only
-            )
-        else:
-            st.warning("No response generated")
+            elif chat_type == "Chat with stored CSV-DB":
+                sql_agent_with_csv_data = SQLAgentWithCSVData()
+                output = sql_agent_with_csv_data.create_sql_agent_from_csv_data(engine=stored_engine,question=user_input)
+                print(output)
 
-    except Exception as e:
-        raise CustomException(e,sys)
+            elif chat_type == "Chat with Uploaded CSV-DB":
+                if uploaded_engine is None:
+                    uploaded_db_path = os.path.join(os.getcwd(),"artifacts","db","uploadcsv.db")
+                    if os.path.exists(uploaded_db_path):
+                        os.remove(uploaded_db_path)
+                    st.error("Please upload a CSV/XLSX file first")
+                    output = ''
+                else:
+                    sql_agent_with_upload_csv_data = SQLAgentWithUploadCSVData()
+                    output = sql_agent_with_upload_csv_data.create_sql_agent_from_upload_csv_data(engine=uploaded_engine,question=user_input)
+                    print(output)
+
+            if output:
+                st.text_area(
+                    "🤖 Agent Response",
+                    value=output,
+                    height=320,
+                    key="assistant_output_box",
+                    disabled=True  # Makes it read-only
+                )
+            else:
+                st.warning("No response generated")
+
+        except Exception as e:
+            raise CustomException(e,sys)
+        
+
+
+
+if query_option=="Text":
+
+    user_input = st.text_area(
+        "💬 Enter your question here:",
+        height=70,
+        placeholder="E.g. How many records are there in the table?",
+        key="chat_input_box"
+    )
+
+    submit_btn = st.button("🚀 Submit")
+
+    if submit_btn and user_input.strip():
+        try:
+            if chat_type == "Chat with stored SQL-DB":
+                sql_agent_from_sql_data = SQLAgentWithSQLData()
+                output = sql_agent_from_sql_data.create_sql_agent_from_sql_data(question=user_input)
+                print(output)
+
+            elif chat_type == "Chat with stored CSV-DB":
+                sql_agent_with_csv_data = SQLAgentWithCSVData()
+                output = sql_agent_with_csv_data.create_sql_agent_from_csv_data(engine=stored_engine,question=user_input)
+                print(output)
+
+            elif chat_type == "Chat with Uploaded CSV-DB":
+                if uploaded_engine is None:
+                    uploaded_db_path = os.path.join(os.getcwd(),"artifacts","db","uploadcsv.db")
+                    if os.path.exists(uploaded_db_path):
+                        os.remove(uploaded_db_path)
+                    st.error("Please upload a CSV/XLSX file first")
+                    output = ''
+                else:
+                    sql_agent_with_upload_csv_data = SQLAgentWithUploadCSVData()
+                    output = sql_agent_with_upload_csv_data.create_sql_agent_from_upload_csv_data(engine=uploaded_engine,question=user_input)
+                    print(output)
+
+            if output:
+                st.text_area(
+                    "🤖 Agent Response",
+                    value=output,
+                    height=320,
+                    key="assistant_output_box",
+                    disabled=True  # Makes it read-only
+                )
+            else:
+                st.warning("No response generated")
+
+        except Exception as e:
+            raise CustomException(e,sys)
 
 
 
