@@ -53,6 +53,11 @@ chat_type = st.sidebar.selectbox(
     ]
 )
 
+query_option = st.sidebar.radio(label='How do you want to give query',options=['text','audio'])
+
+if query_option=="audio":
+    
+
 if st.sidebar.button("Clear Uploaded DB"):
     uploaded_db_path = r"artifacts\db\uploadcsv.db"
     if os.path.exists(uploaded_db_path):
