@@ -15,13 +15,6 @@ st.set_page_config(page_title="SQL AI Chatbot", layout="wide")
 
 st.title("SQL AI Agent")
 
-# if "messages" not in st.session_state:
-#     st.session_state.messages = []
-
-# # Chat display
-# for msg in st.session_state.messages:
-#     with st.chat_message(msg["role"], avatar=msg["avatar"]):
-#         st.markdown(msg["content"])
 
 # File uploader (CSV, XLSX)
 uploaded_files = st.sidebar.file_uploader(
@@ -72,6 +65,8 @@ stored_engine = data_prep_conntection.create_sqldb_from_csv()
 data_prep_conntection.sql_connection_check()
 data_prep_conntection.csv_connection_check(engine=stored_engine)
 
+# Audio Query Code
+
 if query_option=="Audio":
     audio_file = st.audio_input("Record your query")
 
@@ -93,45 +88,49 @@ if query_option=="Audio":
 
         user_input = final_transcript
 
-        try:
-            if chat_type == "Chat with stored SQL-DB":
-                sql_agent_from_sql_data = SQLAgentWithSQLData()
-                output = sql_agent_from_sql_data.create_sql_agent_from_sql_data(question=user_input)
-                print(output)
+        submit_btn = st.button("🚀 Submit")
 
-            elif chat_type == "Chat with stored CSV-DB":
-                sql_agent_with_csv_data = SQLAgentWithCSVData()
-                output = sql_agent_with_csv_data.create_sql_agent_from_csv_data(engine=stored_engine,question=user_input)
-                print(output)
+        if submit_btn:
 
-            elif chat_type == "Chat with Uploaded CSV-DB":
-                if uploaded_engine is None:
-                    uploaded_db_path = os.path.join(os.getcwd(),"artifacts","db","uploadcsv.db")
-                    if os.path.exists(uploaded_db_path):
-                        os.remove(uploaded_db_path)
-                    st.error("Please upload a CSV/XLSX file first")
-                    output = ''
-                else:
-                    sql_agent_with_upload_csv_data = SQLAgentWithUploadCSVData()
-                    output = sql_agent_with_upload_csv_data.create_sql_agent_from_upload_csv_data(engine=uploaded_engine,question=user_input)
+            try:
+                if chat_type == "Chat with stored SQL-DB":
+                    sql_agent_from_sql_data = SQLAgentWithSQLData()
+                    output = sql_agent_from_sql_data.create_sql_agent_from_sql_data(question=user_input)
                     print(output)
 
-            if output:
-                st.text_area(
-                    "🤖 Agent Response",
-                    value=output,
-                    height=320,
-                    key="assistant_output_box",
-                    disabled=True  # Makes it read-only
-                )
-            else:
-                st.warning("No response generated")
+                elif chat_type == "Chat with stored CSV-DB":
+                    sql_agent_with_csv_data = SQLAgentWithCSVData()
+                    output = sql_agent_with_csv_data.create_sql_agent_from_csv_data(engine=stored_engine,question=user_input)
+                    print(output)
 
-        except Exception as e:
-            raise CustomException(e,sys)
+                elif chat_type == "Chat with Uploaded CSV-DB":
+                    if uploaded_engine is None:
+                        uploaded_db_path = os.path.join(os.getcwd(),"artifacts","db","uploadcsv.db")
+                        if os.path.exists(uploaded_db_path):
+                            os.remove(uploaded_db_path)
+                        st.error("Please upload a CSV/XLSX file first")
+                        output = ''
+                    else:
+                        sql_agent_with_upload_csv_data = SQLAgentWithUploadCSVData()
+                        output = sql_agent_with_upload_csv_data.create_sql_agent_from_upload_csv_data(engine=uploaded_engine,question=user_input)
+                        print(output)
+
+                if output:
+                    st.text_area(
+                        "🤖 Agent Response",
+                        value=output,
+                        height=320,
+                        key="assistant_output_box",
+                        disabled=True  # Makes it read-only
+                    )
+                else:
+                    st.warning("No response generated")
+
+            except Exception as e:
+                raise CustomException(e,sys)
         
 
-
+# Text Query Code
 
 if query_option=="Text":
 

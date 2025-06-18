@@ -1,0 +1,15 @@
+Query:
+1) How many tables are there in the schema?
+
+2) How many records are there in the cancer table?
+
+3) How many records are there in the titanic table?
+
+4) I want to know the passengers name whose age is 55 years from titanic table?
+
+5) How many male and female passengers are the in the titanic table?
+
+6) what is the average age of male and female passengers in the titanic table?
+
+7) I want the details of the passenger whose age is second highest in the titanic table?
+

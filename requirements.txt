@@ -8,4 +8,5 @@ openai-whisper
 
 streamlit_webrtc
 soundfile
+openai
 # -e .

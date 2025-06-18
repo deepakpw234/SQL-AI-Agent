@@ -10,6 +10,11 @@ import sys
 from src.exception import CustomException
 from src.logger import logging
 
+
+import openai
+from dotenv import load_dotenv
+load_dotenv()
+
 @dataclass
 class AudioQueryConfig:
     audio_dir_path = os.path.join(os.getcwd(),'artifacts','audio_data')
@@ -22,13 +27,21 @@ class AudioQuery:
     
     def transcribe_audio(self , audio_path):
         try:
-            model = whisper.load_model("base")
-            result = model.transcribe(audio_path)
+            # model = whisper.load_model("base")
+            # result = model.transcribe(audio_path)
+
+            audio_file = open(audio_path,'rb')
+
+            response = openai.audio.transcriptions.create(
+                model='gpt-4o-mini-transcribe',
+                file=audio_file,
+                response_format='text'
+            )
             
         except Exception as e:
             raise CustomException(e,sys)
 
-        return result["text"]
+        return response
     
     
     def get_llm_filteration(self,actual_transcript):
